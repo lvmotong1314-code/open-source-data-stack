@@ -1,10 +1,11 @@
-FROM python:3.7-slim
-
-COPY . /app
+FROM python:3.11-slim
 
 WORKDIR /app
 
-RUN pip install pandas==1.2.3
-RUN pip install psycopg2-binary==2.9.1
+COPY db/requirements.txt /app/db/requirements.txt
 
-CMD python3 db/scripts/create_db_insert_data.py
+RUN pip install --no-cache-dir -r /app/db/requirements.txt
+
+COPY . /app
+
+CMD ["python3", "db/scripts/ingest_taxi_trips.py"]

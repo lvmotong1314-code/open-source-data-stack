@@ -284,22 +284,25 @@ services:
     environment:
       - POSTGRES_PASSWORD=docker
       - POSTGRES_USER=docker
-      - POSTGRES_DB=raw
+      - POSTGRES_DB=taxi_warehouse
     container_name: "postgres_local"
+    volumes:
+      - taxi-warehouse-data:/var/lib/postgresql/data
     healthcheck:
             test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
             timeout: 20s
             retries: 10
 
-  create-db:
+  taxi-ingestion:
     build: 
       dockerfile: ./db.Dockerfile
     environment:
       - POSTGRES_PASSWORD=docker
       - POSTGRES_USER=docker
-      - POSTGRES_DB=raw
+      - POSTGRES_DB=taxi_warehouse
       - POSTGRES_HOST=postgres_local
       - POSTGRES_PORT=5432
+      - CHICAGO_APP_TOKEN=${CHICAGO_APP_TOKEN}
     volumes:
       - .:/app
     working_dir: /app
@@ -310,7 +313,7 @@ services:
   dbt_docs:
     image: dockersamples/static-site
     volumes:
-      - ./dbt/jaffle_shop/target:/usr/share/nginx/html
+      - ./dbt/chicago_taxi/target:/usr/share/nginx/html
     ports:
       - "80:80"
     container_name: "dbt_docs"
@@ -322,6 +325,24 @@ services:
     ports:
       - "81:80"
     container_name: "great_expectations_docs"
+
+  dbt:
+    build:
+      context: .
+      dockerfile: ./dbt.Dockerfile
+    environment:
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_USER=docker
+      - POSTGRES_DB=taxi_warehouse
+      - POSTGRES_HOST=postgres_local
+      - POSTGRES_PORT=5432
+    volumes:
+      - .:/app
+    working_dir: /app/dbt/chicago_taxi
+    depends_on:
+      postgres_local:
+        condition: service_healthy
     
 volumes:
   postgres-db-volume:
+  taxi-warehouse-data:

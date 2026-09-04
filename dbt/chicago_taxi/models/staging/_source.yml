@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw data ingested from the City of Chicago Taxi Trips (2024-) SODA 3 API.
+    database: "{{ env_var('POSTGRES_DB') }}"
+    schema: raw
+
+    tables:
+      - name: taxi_trips
+        description: Raw Chicago taxi trip records, with one row per source taxi trip.
+
+        loaded_at_field: _ingested_at
+
+        freshness:
+          warn_after:
+            count: 24
+            period: hour
+          error_after:
+            count: 48
+            period: hour
+
+        columns:
+          - name: trip_id
+            description: Natural source identifier for a taxi trip.
+            tests:
+              - not_null
+              - unique
+
+          - name: _batch_id
+            description: Identifier of the ingestion batch that first inserted the record.
+            tests:
+              - not_null
+
+          - name: _ingested_at
+            description: Timestamp when the record was inserted into the raw warehouse.
+            tests:
+              - not_null
+
+          - name: _source_name
+            description: Identifier of the upstream source.
+            tests:
+              - not_null

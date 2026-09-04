@@ -1,32 +1,38 @@
-DROP SCHEMA IF EXISTS jaffle_shop CASCADE;
+CREATE SCHEMA IF NOT EXISTS raw;
 
-CREATE SCHEMA IF NOT EXISTS jaffle_shop;
+CREATE TABLE IF NOT EXISTS raw.taxi_trips (
+    trip_id TEXT PRIMARY KEY,
+    taxi_id TEXT,
 
-DROP SCHEMA IF EXISTS stripe CASCADE;
+    trip_start_timestamp TEXT,
+    trip_end_timestamp TEXT,
+    trip_seconds TEXT,
+    trip_miles TEXT,
 
-CREATE SCHEMA IF NOT EXISTS stripe;
+    pickup_census_tract TEXT,
+    dropoff_census_tract TEXT,
+    pickup_community_area TEXT,
+    dropoff_community_area TEXT,
 
-CREATE TABLE IF NOT EXISTS jaffle_shop.customers (
-    id int PRIMARY KEY,
-    first_name varchar(255),
-    last_name varchar(255)
-);
+    fare TEXT,
+    tips TEXT,
+    tolls TEXT,
+    extras TEXT,
+    trip_total TEXT,
 
-CREATE TABLE IF NOT EXISTS jaffle_shop.orders (
-    id int PRIMARY KEY,
-    user_id int,
-    order_date date,
-    status varchar(255),
-    _etl_loaded_at timestamp NOT NULL DEFAULT NOW()
-);
+    payment_type TEXT,
+    company TEXT,
 
-CREATE TABLE IF NOT EXISTS stripe.payment (
-    id int PRIMARY KEY,
-    orderid int,
-    paymentmethod varchar(255),
-    status varchar(255),
-    amount integer,
-    created date,
-    _batched_at timestamp NOT NULL DEFAULT NOW()
+    pickup_centroid_latitude TEXT,
+    pickup_centroid_longitude TEXT,
+    pickup_centroid_location JSONB,
+
+    dropoff_centroid_latitude TEXT,
+    dropoff_centroid_longitude TEXT,
+    dropoff_centroid_location JSONB,
+
+    _ingested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    _batch_id TEXT NOT NULL,
+    _source_name TEXT NOT NULL
 );
 

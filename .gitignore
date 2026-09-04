@@ -2,3 +2,8 @@
 *.DS_Store
 *__pycache__
 .env
+
+# dbt generated artifacts
+dbt/**/target/
+dbt/**/logs/
+dbt/**/dbt_packages/
