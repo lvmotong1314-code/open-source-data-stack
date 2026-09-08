@@ -16,8 +16,8 @@ typed as (
         nullif(trim(trip_seconds), '')::integer as trip_seconds,
         nullif(trim(trip_miles), '')::numeric as trip_miles,
 
-        pickup_census_tract,
-        dropoff_census_tract,
+        nullif(trim(pickup_census_tract), '') as pickup_census_tract,
+        nullif(trim(dropoff_census_tract), '') as dropoff_census_tract,
         nullif(trim(pickup_community_area), '')::integer as pickup_community_area,
         nullif(trim(dropoff_community_area), '')::integer as dropoff_community_area,
 
