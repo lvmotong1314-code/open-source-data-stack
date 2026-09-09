@@ -1,0 +1,83 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar dimension used by taxi trip start and end dates.
+    columns:
+      - name: date_key
+        description: Deterministic date key in YYYYMMDD format, with 0 reserved for Unknown Date.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_company
+    description: One row per normalized taxi company, including an Unknown Company member.
+    columns:
+      - name: company_key
+        description: Deterministic surrogate key for the taxi company.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: company_name
+        description: Normalized taxi company name.
+        data_tests:
+          - not_null
+
+  - name: dim_location
+    description: Canonical taxi location dimension role-played by pickup and dropoff locations.
+    columns:
+      - name: location_key
+        description: Deterministic surrogate key derived from canonical location attributes.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: fct_taxi_trips
+    description: One row per unique Chicago taxi trip.
+    columns:
+      - name: trip_id
+        description: Natural source identifier and fact-table grain key.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: start_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: end_date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: pickup_location_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+
+      - name: dropoff_location_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_location')
+                field: location_key
+
+      - name: company_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_company')
+                field: company_key

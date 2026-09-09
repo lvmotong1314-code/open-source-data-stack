@@ -310,13 +310,6 @@ services:
       postgres_local:
         condition: service_healthy
 
-  dbt_docs:
-    image: dockersamples/static-site
-    volumes:
-      - ./dbt/chicago_taxi/target:/usr/share/nginx/html
-    ports:
-      - "80:80"
-    container_name: "dbt_docs"
 
   great_expectations_docs:
     image: dockersamples/static-site

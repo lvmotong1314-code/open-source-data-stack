@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: stg_taxi_trips
+    description: >
+      Cleaned and typed staging view for raw Chicago taxi trip records.
+      Preserves one row per source taxi trip while standardizing timestamps,
+      numeric fields, census tract values, and ingestion metadata.
+
+    columns:
+      - name: trip_id
+        description: Unique source identifier for the taxi trip.
+
+      - name: taxi_id
+        description: Source identifier for the taxi.
+
+      - name: trip_start_timestamp
+        description: Taxi trip start timestamp converted from the raw text representation.
+
+      - name: trip_end_timestamp
+        description: Taxi trip end timestamp converted from the raw text representation.
+
+      - name: trip_seconds
+        description: Trip duration in seconds.
+
+      - name: trip_miles
+        description: Trip distance in miles.
+
+      - name: pickup_census_tract
+        description: Pickup census tract identifier, normalized so blank values become null.
+
+      - name: dropoff_census_tract
+        description: Dropoff census tract identifier, normalized so blank values become null.
+
+      - name: pickup_community_area
+        description: Pickup Chicago community area identifier.
+
+      - name: dropoff_community_area
+        description: Dropoff Chicago community area identifier.
+
+      - name: fare
+        description: Base taxi fare.
+
+      - name: tips
+        description: Recorded tip amount.
+
+      - name: tolls
+        description: Recorded toll amount.
+
+      - name: extras
+        description: Additional trip charges.
+
+      - name: trip_total
+        description: Total recorded trip charge.
+
+      - name: payment_type
+        description: Payment method reported by the source.
+
+      - name: company
+        description: Taxi company reported by the source.
+
+      - name: pickup_centroid_latitude
+        description: Pickup centroid latitude.
+
+      - name: pickup_centroid_longitude
+        description: Pickup centroid longitude.
+
+      - name: pickup_centroid_location
+        description: Raw pickup GeoJSON location retained from the source.
+
+      - name: dropoff_centroid_latitude
+        description: Dropoff centroid latitude.
+
+      - name: dropoff_centroid_longitude
+        description: Dropoff centroid longitude.
+
+      - name: dropoff_centroid_location
+        description: Raw dropoff GeoJSON location retained from the source.
+
+      - name: _batch_id
+        description: Identifier of the ingestion batch that inserted the raw record.
+
+      - name: _source_name
+        description: Identifier of the upstream source.
+
+      - name: _ingested_at
+        description: Timestamp when the raw record was inserted into the warehouse.

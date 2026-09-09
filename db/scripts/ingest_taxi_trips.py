@@ -140,7 +140,7 @@ def get_db_config():
     return config
 
 
-def fetch_taxi_trips(page_number=1, page_size=5):
+def fetch_taxi_trips(page_number=1, page_size=10):
     token = get_app_token()
 
     headers = {
