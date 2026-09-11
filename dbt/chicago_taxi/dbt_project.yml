@@ -4,8 +4,6 @@ config-version: 2
 
 profile: 'chicago_taxi'
 
-flags:
-  use_colors: true
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
