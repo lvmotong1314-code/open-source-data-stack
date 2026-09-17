@@ -1,0 +1,3 @@
+-r db/requirements.txt
+-r dbt/requirements.txt
+pytest>=7,<9

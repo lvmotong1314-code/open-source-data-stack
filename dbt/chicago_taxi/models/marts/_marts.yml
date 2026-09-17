@@ -6,7 +6,7 @@ models:
     columns:
       - name: date_key
         description: Deterministic date key in YYYYMMDD format, with 0 reserved for Unknown Date.
-        data_tests:
+        tests:
           - not_null
           - unique
 
@@ -15,13 +15,13 @@ models:
     columns:
       - name: company_key
         description: Deterministic surrogate key for the taxi company.
-        data_tests:
+        tests:
           - not_null
           - unique
 
       - name: company_name
         description: Normalized taxi company name.
-        data_tests:
+        tests:
           - not_null
 
   - name: dim_location
@@ -29,7 +29,7 @@ models:
     columns:
       - name: location_key
         description: Deterministic surrogate key derived from canonical location attributes.
-        data_tests:
+        tests:
           - not_null
           - unique
 
@@ -38,46 +38,41 @@ models:
     columns:
       - name: trip_id
         description: Natural source identifier and fact-table grain key.
-        data_tests:
+        tests:
           - not_null
           - unique
 
       - name: start_date_key
-        data_tests:
+        tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_date')
-                field: date_key
+              to: ref('dim_date')
+              field: date_key
 
       - name: end_date_key
-        data_tests:
+        tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_date')
-                field: date_key
+              to: ref('dim_date')
+              field: date_key
 
       - name: pickup_location_key
-        data_tests:
+        tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_location')
-                field: location_key
+              to: ref('dim_location')
+              field: location_key
 
       - name: dropoff_location_key
-        data_tests:
+        tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_location')
-                field: location_key
+              to: ref('dim_location')
+              field: location_key
 
       - name: company_key
-        data_tests:
+        tests:
           - not_null
           - relationships:
-              arguments:
-                to: ref('dim_company')
-                field: company_key
+              to: ref('dim_company')
+              field: company_key

@@ -46,4 +46,20 @@ with DAG(
         execution_timeout=timedelta(minutes=10),
     )
 
-    check_environment >> ingest_raw >> dbt_transform
+    quality_gate = BashOperator(
+        task_id="quality_gate",
+        bash_command=(
+            "cd /opt/dbt/chicago_taxi && "
+            "dbt test --profiles-dir /opt/dbt/chicago_taxi"
+        ),
+        execution_timeout=timedelta(minutes=10),
+        retries=0,
+    )
+
+    publish = BashOperator(
+        task_id="publish",
+        bash_command="echo 'Quality gate passed. Chicago Taxi marts are ready for downstream consumption.'",
+        retries=0,
+    )
+
+    check_environment >> ingest_raw >> dbt_transform >> quality_gate >> publish

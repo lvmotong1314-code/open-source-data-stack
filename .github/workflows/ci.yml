@@ -1,0 +1,77 @@
+name: Project 1 CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: docker
+          POSTGRES_PASSWORD: docker
+          POSTGRES_DB: taxi_warehouse
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U docker -d taxi_warehouse"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: taxi_warehouse
+
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: docker
+      PGPASSWORD: docker
+      PGDATABASE: taxi_warehouse
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt
+
+      - name: Run Python unit tests
+        run: python -m pytest tests/test_ingest_taxi_trips.py -v
+
+      - name: Check Airflow DAG syntax
+        run: python -m py_compile airflow/dags/project1_taxi_pipeline.py
+
+      - name: Initialize raw database
+        run: psql -f db/scripts/sql/create_tables.sql
+
+      - name: Load CI fixture
+        run: psql -f tests/fixtures/ci_taxi_trips.sql
+
+      - name: Install dbt dependencies
+        working-directory: dbt/chicago_taxi
+        run: dbt deps --profiles-dir .
+
+      - name: Compile dbt project
+        working-directory: dbt/chicago_taxi
+        run: dbt compile --profiles-dir .
+
+      - name: Run dbt models
+        working-directory: dbt/chicago_taxi
+        run: dbt run --profiles-dir .
+
+      - name: Run dbt tests
+        working-directory: dbt/chicago_taxi
+        run: dbt test --profiles-dir .
