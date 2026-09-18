@@ -10,3 +10,6 @@ dbt/**/dbt_packages/
 
 # airflow generated artifacts
 airflow/logs/**
+
+# Generated Spark output
+data/parquet/

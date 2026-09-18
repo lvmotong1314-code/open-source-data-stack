@@ -337,6 +337,23 @@ services:
     depends_on:
       postgres_local:
         condition: service_healthy
+
+  spark:
+    build:
+      context: .
+      dockerfile: ./spark.Dockerfile
+    environment:
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_USER=docker
+      - POSTGRES_DB=taxi_warehouse
+      - POSTGRES_HOST=postgres_local
+      - POSTGRES_PORT=5432
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      postgres_local:
+        condition: service_healthy
     
 volumes:
   postgres-db-volume:

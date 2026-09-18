@@ -140,7 +140,7 @@ def get_db_config():
     return config
 
 
-def fetch_taxi_trips(page_number=1, page_size=10):
+def fetch_taxi_trips(page_number=1, page_size=5000):
     token = get_app_token()
 
     headers = {
@@ -148,10 +148,13 @@ def fetch_taxi_trips(page_number=1, page_size=10):
     }
 
     payload = {
-        "query": f"SELECT * LIMIT {page_size}",
+        "query": "SELECT *",
+        "page": {
+            "pageNumber": page_number,
+            "pageSize": page_size,
+        },
         "includeSynthetic": False,
-        "orderingSpecifier": "discard",
-}
+    }
 
     logger.info(
         "Requesting Chicago Taxi Trips page=%s page_size=%s",
@@ -250,9 +253,37 @@ def load_taxi_trips(records):
 
 
 if __name__ == "__main__":
-    trips = fetch_taxi_trips()
-    load_taxi_trips(trips)
+    page_size = 5000
+    num_pages = 4
 
-    if trips:
-        logger.info("First record contains %s fields", len(trips[0]))
-        logger.info("First record keys: %s", sorted(trips[0].keys()))
+    total_fetched = 0
+    total_inserted = 0
+
+    for page_number in range(1, num_pages + 1):
+        trips = fetch_taxi_trips(
+            page_number=page_number,
+            page_size=page_size,
+        )
+
+        if not trips:
+            logger.info("No records returned for page=%s, stopping", page_number)
+            break
+
+        batch_id, inserted_count = load_taxi_trips(trips)
+
+        total_fetched += len(trips)
+        total_inserted += inserted_count
+
+        logger.info(
+            "Page complete page=%s batch_id=%s fetched=%s inserted=%s",
+            page_number,
+            batch_id,
+            len(trips),
+            inserted_count,
+        )
+
+    logger.info(
+        "Ingestion complete total_fetched=%s total_inserted=%s",
+        total_fetched,
+        total_inserted,
+    )
