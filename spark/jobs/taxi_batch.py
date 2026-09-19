@@ -12,11 +12,14 @@ def main():
         .getOrCreate()
     )
 
+    spark.sparkContext.setLogLevel("WARN")
+
     postgres_host = os.environ["POSTGRES_HOST"]
     postgres_port = os.environ["POSTGRES_PORT"]
     postgres_db = os.environ["POSTGRES_DB"]
     postgres_user = os.environ["POSTGRES_USER"]
     postgres_password = os.environ["POSTGRES_PASSWORD"]
+
 
     jdbc_url = (
         f"jdbc:postgresql://{postgres_host}:{postgres_port}/{postgres_db}"
@@ -91,11 +94,14 @@ def main():
         )
     )
 
-    print("=== Transformed schema ===")
-    transformed_df.printSchema()
 
-    transformed_count = transformed_df.count()
-    print(f"Transformed taxi trip count: {transformed_count}")
+    (
+        transformed_df
+        .groupBy("trip_date")
+        .count()
+        .orderBy("trip_date")
+        .show(30, truncate=False)
+    )
 
     output_path = "/app/data/parquet/taxi_trips_unpartitioned"
 
@@ -108,21 +114,20 @@ def main():
 
     print(f"Parquet written to: {output_path}")
 
-    parquet_df = spark.read.parquet(output_path)
 
-    print("=== Parquet schema ===")
-    parquet_df.printSchema()
+    partitioned_output_path = "/app/data/parquet/taxi_trips_by_date"
 
-    parquet_count = parquet_df.count()
-    print(f"Parquet taxi trip count: {parquet_count}")
+    (
+        transformed_df
+        .write
+        .mode("overwrite")
+        .partitionBy("trip_date")
+        .parquet(partitioned_output_path)
+    )
 
-    print("=== Parquet sample ===")
-    parquet_df.show(5, truncate=False)
+    print(f"Date-partitioned Parquet written to: {partitioned_output_path}")
 
-    if transformed_count != parquet_count:
-        raise ValueError(
-            f"Row count mismatch: transformed={transformed_count}, parquet={parquet_count}"
-        )
+
 
     spark.stop()
 
