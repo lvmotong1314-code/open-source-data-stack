@@ -60,6 +60,12 @@ jobs:
       - name: Load CI fixture
         run: psql -f tests/fixtures/ci_taxi_trips.sql
 
+      - name: Build Spark image
+        run: docker build -f spark.Dockerfile -t project1-spark-ci .
+
+      - name: Run Spark smoke test
+        run: docker run --rm --network host -e POSTGRES_HOST=127.0.0.1 -e POSTGRES_PORT=5432 -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=taxi_warehouse -v "${{ github.workspace }}:/app" project1-spark-ci spark-submit --jars /opt/jdbc/postgresql.jar spark/jobs/taxi_batch.py
+
       - name: Install dbt dependencies
         working-directory: dbt/chicago_taxi
         run: dbt deps --profiles-dir .

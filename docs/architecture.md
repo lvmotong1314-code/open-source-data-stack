@@ -2,12 +2,17 @@
 
 ## Overview
 
-This project implements a local batch data platform for the City of Chicago
-Taxi Trips (2024-) dataset.
+The current Project 1 architecture implements a local batch data pipeline for
+the City of Chicago Taxi Trips dataset.
 
-The current Week 5 architecture focuses on data ingestion, warehouse layering,
-dbt transformation, dimensional modeling, automated data-quality validation,
-source freshness, and lineage documentation.
+The pipeline includes API ingestion, PostgreSQL raw storage, dbt dimensional
+modeling and data-quality tests, Airflow orchestration and recovery behavior,
+CI validation, and an independent PySpark batch-processing path that writes
+partitioned Parquet output.
+
+The project is intentionally local-first. Spark currently runs in local mode
+rather than on a distributed Spark cluster.
+
 
 ```text
 City of Chicago SODA 3 API
@@ -38,6 +43,34 @@ staging.stg_taxi_trips
 ```
 
 ## Runtime Components
+
+### spark
+
+`spark` is the local PySpark batch-processing runtime.
+
+Its responsibilities are:
+
+- read `raw.taxi_trips` from PostgreSQL through JDBC;
+- select the batch-processing fields used by the Spark path;
+- cast duration, distance, and fare-related values to numeric types;
+- derive `trip_date` from `trip_start_timestamp`;
+- write Snappy-compressed Parquet output;
+- physically partition the final batch output by `trip_date`;
+- reread the output and validate that the source and Parquet row counts match.
+
+Spark currently runs with:
+
+`local[*]`
+
+This means the driver and local executor tasks run in the same Spark container.
+The project does not currently deploy a standalone or distributed Spark cluster.
+
+The generated Parquet data is written under:
+
+`data/parquet/`
+
+Generated Parquet files are excluded from Git because they are reproducible
+runtime artifacts rather than source code.
 
 ### postgres_local
 
@@ -106,7 +139,14 @@ intermediate -> view
 marts        -> table
 ```
 
-Airflow is intentionally not required for the current Week 5 implementation.
+Airflow is the orchestration layer for the Project 1 pipeline.
+
+The implemented DAG provides scheduling, task dependencies, retries, timeout
+behavior, catchup/backfill behavior, and failure-recovery validation for the
+ingestion and dbt/data-quality path.
+
+The PySpark batch job is currently kept independently executable and is not yet
+an Airflow task.
 
 ## Warehouse Layers
 
@@ -393,28 +433,38 @@ The project does not introduce `dim_payment_type` because payment type is a
 small categorical attribute and does not require a separate dimension in the
 current version.
 
-The project also keeps dbt execution independent from Airflow during Week 5 so
-that transformation concepts can be developed and validated before
-orchestration is introduced.
+### Parquet partition strategy
 
-## Future Extension Points
+The Spark batch path was evaluated using three physical layouts:
 
-The current implementation intentionally stops at the Week 5 project boundary.
+| Layout | Parquet files | Approximate size |
+|---|---:|---:|
+| Unpartitioned | 1 | 1.1 MB |
+| Partitioned by `trip_date` | 12 | 1.3 MB |
+| Partitioned by `payment_type` | 8 | 1.3 MB |
 
-Future stages are expected to extend the platform with:
+For the current 20,010-row dataset, the unpartitioned layout has the lowest
+file-management overhead.
 
-- Airflow orchestration;
-- scheduling and retries;
-- timeout and catchup configuration;
-- deterministic backfill workflows;
-- pipeline-level failure recovery;
-- dbt tests as orchestration quality gates;
-- CI checks;
-- PySpark raw processing;
-- Parquet output;
-- partitioning experiments;
-- runtime and recovery metrics;
-- final reproducibility documentation.
+However, `trip_date` is retained as the batch-output partition key because it
+matches the time-oriented growth pattern of the dataset. Spark `EXPLAIN`
+confirmed directory-level partition pruning for a date-filtered query.
 
-These components are future extension points and are not claimed as implemented
-in the current Week 5 version.
+The experiment also exposed an important trade-off: the current sample is
+highly skewed by date, producing several very small Parquet files. Therefore,
+date partitioning is treated as a design choice for a growing dataset rather
+than as a performance improvement for the current small sample.
+
+
+## Current Boundaries
+
+The current Week 7 implementation intentionally keeps the following boundaries:
+
+- Spark runs locally with `local[*]`; no distributed Spark cluster is deployed.
+- The Spark batch path is independently executable and is not currently
+  orchestrated by the Airflow DAG.
+- Parquet output remains on local project storage rather than object storage.
+- Partition experiments use a small local dataset and are not presented as
+  production performance benchmarks.
+- Project 1 is not yet frozen as a resume-ready v1.0 release; final release
+  polish belongs to Week 8.
